@@ -13,7 +13,7 @@ export class AppController {
         client_id:
           '24505a193a1387501b4477352c3a949680f317d28f3354226ed21b6f294d3f13',
         client_secret:
-          'f62a24bf3e2a8320a6db516ed48aa80696b4c539e19c46537f4948fa48a9f884',
+          '',
         code: code,
         redirect_uri: 'http://localhost:8080/login/',
       };
