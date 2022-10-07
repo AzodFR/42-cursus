@@ -1,0 +1,95 @@
+ll
+
+nothing...
+
+find / -user flag14 2> /dev/null
+
+nothing...
+
+ls /var/mail
+|
+L-> level05
+
+not for me...
+
+cat /etc/shadow
+
+Permission denied
+
+sudo -l
+
+user level14 may not run sudo on SnowCrash
+
+so I can't be sudo, I can't log into flag14, all I can do is 
+to bruteforce the getflag binary
+
+gdb /bin/getflag
+
+r
+|
+L-> You should not reverse this
+
+the binary know that we are in a debugger ?
+
+strings /bin/getflag
+|
+L-> getuid
+L-> ptrace
+
+The ptrace() system call provides a means by which one process may observe and control the execution of another process
+
+ok so the ptrace know that we are in a debugger, we may breakpoint on it 
+we will also break on getuid to spoof our uid
+
+I su flag00 and flag01 to check their uid and its 3000 and 3001 so 
+the fake uid will be 3014
+
+gdb /bin/getflag
+
+break ptrace
+
+break getuid
+
+r
+
+the program launch and break at the start of ptrace lets check the eax value
+
+print $eax
+|
+L-> $1 = 0
+
+ok so it's not even launched
+
+s
+
+print $eax
+|
+L-> $2 = -1
+
+ok so that is where the error is from
+let's spoof the debugger
+
+set $eax = 1
+
+s
+
+here we go we are on the second breakpoint
+let's re-check the eax value (it will store our uid)
+
+print $eax
+|
+L-> $3 = 32
+
+s
+
+print $eax
+|
+L-> $4 = 2014
+
+ther is our uid, let's spoof it
+
+set $eax = 3014
+
+s
+
+here we go, we have the flag

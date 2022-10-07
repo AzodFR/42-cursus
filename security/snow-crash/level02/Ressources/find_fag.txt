@@ -1,0 +1,30 @@
+ls
+|
+L-> level02.pcap
+
+--------------
+
+need to copy to analys in wireshark
+
+ncp -P 4242 IP:~/level02.pcap .
+
+in wireshark open pcap file 
+
+Analyse -> follow -> TCP stream
+
+found:
+
+"Password: ft_wandr...NDRel.L0L"
+
+ft_wandr...NDRel.L0L ???
+
+... in ascii is no printable, so we check hex
+
+66 74 5f 77 61 6e 64 72 7f 7f 7f 4e 44 52 65 6c 7f 4c 30 4c
+f  t  _  w  a  n  d  r  .  .  .  N  D  R  e  l  .  L  0  L
+
+7f is DEL in ascii so we need to delete 1 byte before each
+
+66 74 5f 77 61 4e 44 52 65 4c 30 4c
+f  t  _  w  a  N  D  R  e  L  0  L
+

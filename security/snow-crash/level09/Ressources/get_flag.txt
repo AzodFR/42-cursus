@@ -1,0 +1,108 @@
+ll
+|
+L-> -rwsr-sr-x flag09 [...] level09
+L-> ----r--r-- flag09 [...] token
+
+okkk let's try 
+
+./level09
+|
+L-> You need to provied only one arg.
+
+....
+
+./level09 token
+|
+L-> tpmhr
+
+it seems to be a little bit to be a real token
+
+./level09 a
+|
+L-> a
+
+./level09 b
+|
+L-> b
+
+./level09 0
+|
+L-> 0
+
+ok so it doesn't open the file it's just use the word token so let's try another thing
+
+./level09 $(cat token)
+|
+L-> f5mpq;vE{{TSW                                                                                                                                                                                                                                                       }}
+
+ok better but can't understand this (ignore the }} it's just for the vscode color)
+I tried this password for the flag09 user and... nop
+let's explore how the script encrypt this
+
+strings level09
+|
+L-> You should not reverse this
+L-> LD_PRELOAD
+L-> Injection Linked lib detected exit..
+
+ok so we don't have to reverse the base string, and they prevent us to exploit gcc :P
+
+./level09 ab
+|
+L-> ac
+
+hum ?? ac ? 
+
+./level09 01
+|
+L-> 02
+
+./level09 012
+|
+L-> 024
+
+ok so it's change the string char by char but how ?
+
+./level09 0000
+|
+L-> 0123
+
+let's try to reverse
+
+./level09 3210
+|
+L-> 3333
+
+
+ok it seems to add the position of each char to themself 
+
+let's me explain:
+
+"0 0 0 0" -> string
+ 0 1 2 3  -> position
+
+so it will be '0' + 0; '0' + 1; '0' + 2; '0' + 3
+
+so if we have:
+
+"0 9 9" -> string
+ 0 1 2  -> position
+
+ if we refeer to the ascci table it must return 0:;
+
+ because the '9' in the ascii table is at the pos 57 then if we make 57 +1 = 58, at the pos 58 we have ':' same with 59 ';'
+
+ so it make string[i] = string[i] + i for each char of the string
+ let's try to make a reverse algorithm which make string[i] = string[i] - i
+
+ let's get the token file from the machine and try our script
+
+ ------
+
+scp -P 4242  level09@localhost:/home/user/level09/token .
+
+./a.out $(cat token)
+|
+L-> f3iji1ju5yuevaus41q1afiuq
+
+let's try to log into flag09 anddd bingo

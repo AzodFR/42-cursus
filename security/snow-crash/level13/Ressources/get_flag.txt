@@ -1,0 +1,45 @@
+ll
+|
+L-> -rwsr-sr-x 1 flag13 [...] level13*
+
+./level13
+|
+L-> UID 2013 started us but we we expect 4242
+
+ok so we see that the program check our UID let's see how he get it
+
+strings level13
+|
+L-> getuid
+
+ok so it call the getuid program an may compare it with 4242 let's launch it with a debugger
+
+gdb level13
+
+to see whats the program do let's dissassemble the main
+
+disass main
+|
+L->  0x08048595 <+9>:     call   0x8048380 <getuid@plt>
+L->  0x0804859a <+14>:    cmp    $0x1092,%eax
+
+there is the first call of getuid, it store the result in eax then compare it, if we check in hex to dec, 1092 = 4242
+so we need toput a breakpoint on the cmp adress to change the eax value to 4242
+
+break *0x0804859a
+
+r
+
+print $eax
+|
+L-> $1 = 2013
+
+so there is our uid but we need to set it to 4242 
+
+set $eax = 4242
+
+s
+|
+L->your token is 2A31L79asukciNyi8uppkEuSx
+
+here we go :)

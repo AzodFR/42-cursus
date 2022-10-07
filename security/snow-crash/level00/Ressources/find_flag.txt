@@ -1,0 +1,19 @@
+find / -user flag00 2> /dev/null
+|
+L-> /usr/sbin/john
+L-> /rofs/usr/sbin/john
+
+cat /usr/sbin/john
+|
+L-> cdiiddwpgswtgt
+
+-------------
+
+python brutrot.py
+0
+13
+cdiiddwpgswtgt
+|
+L-> rot(11): nottoohardhere 
+
+or https://www.dcode.fr/chiffre-rot or https://www.dcode.fr/chiffre-cesar

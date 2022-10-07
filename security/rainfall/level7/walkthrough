@@ -1,0 +1,35 @@
+ll
+|
+L-> -rwsr-s---+ 1 level8 users  5648 Mar  9  2016 level7*
+
+./level7
+segfault
+
+./level7 1
+segfault
+
+./level 1 2
+|
+L-> ~~
+
+./level 1 2 3
+|
+L-> ~~
+
+
+ok so this program takes two args and return ~~
+
+let's disass the main
+
+we found 4 malloc(8);
+
+2 strcpy
+
+1 fopen("/home/user/level8/.pass", "r");
+
+1 fgets
+
+1 puts
+
+we also found the m() function
+wich make a time and a printf

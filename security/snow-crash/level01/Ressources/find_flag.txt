@@ -1,0 +1,15 @@
+cat /etc/passwd
+|
+L-> flag01:42hDRfypTqqnw:[...]
+
+-----------
+
+using john the ripper
+
+echo 42hDRfypTqqnw > hash
+
+john hash
+
+john --show hash
+|
+L->?:abcdefg
