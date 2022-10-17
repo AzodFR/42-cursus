@@ -1,0 +1,9 @@
+version: '3'
+services:
+  theo:
+    build:
+      context: .
+    entrypoint: /bin/sh
+    tty: true
+    volumes:
+      - ./:/shared
